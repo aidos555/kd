@@ -1,6 +1,9 @@
 package hashmap
 
-import "bytes"
+import (
+	"bytes"
+	"hash/fnv"
+)
 
 var defaultCap uint64 = 1 << 10
 
@@ -57,7 +60,7 @@ func (hm *hashMap) setValue(hash uint64, key []byte, value int) int {
 		return value
 	} else {
 		hm.resize()
-		return hm.setValue(hash, key, value)
+		hm.setValue(hash, key, value)
 	}
 
 	hm.Size++
@@ -89,11 +92,7 @@ func (hm *hashMap) resize() {
 }
 
 func (hm *hashMap) hash(key []byte) uint64 {
-	hashValue := uint64(0)
-	for i := 0; i < len(key); i++ {
-		hashValue = hashValue*31 + uint64(key[i])
-	}
-
-	hashValue = (hm.Capacity - 1) & (hashValue ^ (hashValue >> 16))
-	return hashValue
+	h := fnv.New32()
+	h.Write(key)
+	return uint64(h.Sum32()) % hm.Capacity
 }
